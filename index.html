@@ -12,16 +12,27 @@
 
         canvas {
             border: 1px solid #ccc;
+            max-width: 90%;
+            height: auto;
         }
 
         #wash-preview {
             display: flex;
             justify-content: center;
+            gap: 12px;
             margin-top: 20px;
+            flex-wrap: wrap;
         }
 
         .wash {
             margin: 0 10px;
+            max-width: 300px;
+            height: auto;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+
+        .grayscale {
+            filter: grayscale(100%);
         }
     </style>
 </head>
@@ -31,39 +42,125 @@
     <canvas id="canvas" width="800" height="600"></canvas>
 
     <h2>Adjust Wash Levels</h2>
-    <label for="light-wash">Light Wash Level:</label>
-    <input type="range" id="light-wash" min="0" max="1" step="0.1" value="0.2"><br>
 
-    <label for="medium-wash">Medium Wash Level:</label>
-    <input type="range" id="medium-wash" min="0" max="1" step="0.1" value="0.5"><br>
+    <label for="light-end">Light End: <span id="light-end-val">0.33</span></label>
+    <input type="range" id="light-end" min="0" max="1" step="0.01" value="0.33"><br>
 
-    <label for="dark-wash">Dark Wash Level:</label>
-    <input type="range" id="dark-wash" min="0" max="1" step="0.1" value="0.75"><br>
+    <label for="medium-end">Medium End: <span id="medium-end-val">0.66</span></label>
+    <input type="range" id="medium-end" min="0" max="1" step="0.01" value="0.66"><br>
+
+    <label for="light-wash">Light Wash Strength:</label>
+    <input type="range" id="light-wash" min="0" max="1" step="0.01" value="0.2"><br>
+
+    <label for="medium-wash">Medium Wash Strength:</label>
+    <input type="range" id="medium-wash" min="0" max="1" step="0.01" value="0.5"><br>
+
+    <label for="dark-wash">Dark Wash Strength:</label>
+    <input type="range" id="dark-wash" min="0" max="1" step="0.01" value="0.75"><br>
 
     <button id="generate-washes">Generate Washes</button>
+    <button id="toggle-grayscale">Toggle Grayscale</button> 
 
     <h2>Wash Previews</h2>
     <div id="wash-preview"></div>
 
     <script>
-        document.getElementById('upload').addEventListener('change', handleFileUpload);
-        document.getElementById('light-wash').addEventListener('input', updateWashes);
-        document.getElementById('medium-wash').addEventListener('input', updateWashes);
-        document.getElementById('dark-wash').addEventListener('input', updateWashes);
+        // Elements
+        const uploadInput = document.getElementById('upload');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
 
-        let uploadedImage;
+        const lightEnd = document.getElementById('light-end');
+        const mediumEnd = document.getElementById('medium-end');
+        const lightEndVal = document.getElementById('light-end-val');
+        const mediumEndVal = document.getElementById('medium-end-val');
+
+        const lightStrength = document.getElementById('light-wash');
+        const mediumStrength = document.getElementById('medium-wash');
+        const darkStrength = document.getElementById('dark-wash');
+
+        const generateBtn = document.getElementById('generate-washes');
+        const toggleGrayBtn = document.getElementById('toggle-grayscale');
+
+        let uploadedImage = null;
+        let sourceCanvas = null;
+        let sourceCtx = null;
+        let imgW = 0, imgH = 0; // scaled image size for processing
+        let grayscaleActive = false;
+
+        // Wire up events
+        uploadInput.addEventListener('change', handleFileUpload);
+
+        // Strength sliders
+        lightStrength.addEventListener('input', updateWashes);
+        mediumStrength.addEventListener('input', updateWashes);
+        darkStrength.addEventListener('input', updateWashes);
+
+        // Boundary sliders (enforce non-overlap)
+        lightEnd.addEventListener('input', () => {
+            let l = parseFloat(lightEnd.value);
+            let m = parseFloat(mediumEnd.value);
+            if (l > m) {
+                mediumEnd.value = l;
+                m = l;
+            }
+            lightEndVal.textContent = parseFloat(lightEnd.value).toFixed(2);
+            mediumEndVal.textContent = parseFloat(mediumEnd.value).toFixed(2);
+            updateWashes();
+        });
+
+        mediumEnd.addEventListener('input', () => {
+            let m = parseFloat(mediumEnd.value);
+            let l = parseFloat(lightEnd.value);
+            if (m < l) {
+                lightEnd.value = m;
+                l = m;
+            }
+            lightEndVal.textContent = parseFloat(lightEnd.value).toFixed(2);
+            mediumEndVal.textContent = parseFloat(mediumEnd.value).toFixed(2);
+            updateWashes();
+        });
+
+        generateBtn.addEventListener('click', updateWashes);
+
+        toggleGrayBtn.addEventListener('click', () => {
+            grayscaleActive = !grayscaleActive;
+            if (grayscaleActive) {
+                canvas.classList.add('grayscale');
+            } else {
+                canvas.classList.remove('grayscale');
+            }
+            // update preview canvases as well
+            document.querySelectorAll('.wash').forEach(c => {
+                if (grayscaleActive) c.classList.add('grayscale'); else c.classList.remove('grayscale');
+            });
+        });
 
         function handleFileUpload(event) {
             const file = event.target.files[0];
+            if (!file) return;
             const reader = new FileReader();
 
             reader.onload = function(e) {
                 uploadedImage = new Image();
                 uploadedImage.src = e.target.result;
                 uploadedImage.onload = function() {
-                    const canvas = document.getElementById('canvas');
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(uploadedImage, 0, 0, canvas.width, canvas.height);
+                    // Draw image on main canvas preserving aspect ratio (contain)
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    const scale = Math.min(canvas.width / uploadedImage.width, canvas.height / uploadedImage.height);
+                    imgW = Math.round(uploadedImage.width * scale);
+                    imgH = Math.round(uploadedImage.height * scale);
+                    const x = Math.round((canvas.width - imgW) / 2);
+                    const y = Math.round((canvas.height - imgH) / 2);
+                    ctx.drawImage(uploadedImage, x, y, imgW, imgH);
+
+                    // Prepare an offscreen canvas sized to the scaled image for processing
+                    sourceCanvas = document.createElement('canvas');
+                    sourceCanvas.width = imgW;
+                    sourceCanvas.height = imgH;
+                    sourceCtx = sourceCanvas.getContext('2d');
+                    sourceCtx.drawImage(uploadedImage, 0, 0, imgW, imgH);
+
                     updateWashes(); // Generate initial washes
                 };
             };
@@ -71,63 +168,63 @@
         }
 
         function updateWashes() {
-            if (!uploadedImage) return;
+            if (!uploadedImage || !sourceCtx) return;
 
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const imageData = sourceCtx.getImageData(0, 0, imgW, imgH);
             const data = imageData.data;
 
-            const lightLevel = parseFloat(document.getElementById('light-wash').value);
-            const mediumLevel = parseFloat(document.getElementById('medium-wash').value);
-            const darkLevel = parseFloat(document.getElementById('dark-wash').value);
+            // Compute average brightness across the image
+            let brightnessSum = 0;
+            const pixelCount = data.length / 4;
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i], g = data[i+1], b = data[i+2];
+                brightnessSum += (r + g + b) / 3;
+            }
+            const averageBrightness = brightnessSum / pixelCount;
+
+            const lightLevel = parseFloat(lightStrength.value);
+            const mediumLevel = parseFloat(mediumStrength.value);
+            const darkLevel = parseFloat(darkStrength.value);
+
+            const lEnd = parseFloat(lightEnd.value);
+            const mEnd = parseFloat(mediumEnd.value);
 
             const washes = [
-                createWash(data, lightLevel),
-                createWash(data, mediumLevel),
-                createWash(data, darkLevel)
+                createWash(data, lightLevel, 0, lEnd, averageBrightness, imgW, imgH),
+                createWash(data, mediumLevel, lEnd, mEnd, averageBrightness, imgW, imgH),
+                createWash(data, darkLevel, mEnd, 1, averageBrightness, imgW, imgH)
             ];
 
             displayWashes(washes);
         }
 
-        function createWash(data, level) {
+        function createWash(data, level, low, high, averageBrightness, width, height) {
             const newData = new Uint8ClampedArray(data.length);
-            let brightnessSum = 0;
-            const pixelCount = data.length / 4;
 
             for (let i = 0; i < data.length; i += 4) {
-                const r = data[i];
-                const g = data[i + 1];
-                const b = data[i + 2];
+                const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
                 const brightness = (r + g + b) / 3;
+                const norm = brightness / 255;
 
-                brightnessSum += brightness;
-            }
-
-            const averageBrightness = brightnessSum / pixelCount;
-
-            for (let i = 0; i < data.length; i += 4) {
-                const r = data[i];
-                const g = data[i + 1];
-                const b = data[i + 2];
-
-                const brightness = (r + g + b) / 3;
-
-                if (brightness < averageBrightness) {
-                    newData[i] = r * level;        // Apply lighter factor
-                    newData[i + 1] = g * level;    // Apply lighter factor
-                    newData[i + 2] = b * level;    // Apply lighter factor
+                if (norm >= low && norm <= high) {
+                    // Apply contrast-like effect controlled by 'level'
+                    if (brightness < averageBrightness) {
+                        newData[i] = Math.max(0, Math.min(255, r * (1 - level)));
+                        newData[i+1] = Math.max(0, Math.min(255, g * (1 - level)));
+                        newData[i+2] = Math.max(0, Math.min(255, b * (1 - level)));
+                    } else {
+                        newData[i] = Math.max(0, Math.min(255, r * (1 + level)));
+                        newData[i+1] = Math.max(0, Math.min(255, g * (1 + level)));
+                        newData[i+2] = Math.max(0, Math.min(255, b * (1 + level)));
+                    }
+                    newData[i+3] = a;
                 } else {
-                    newData[i] = r * (1 - level); // Darken with inverse factor
-                    newData[i + 1] = g * (1 - level); // Darken with inverse factor
-                    newData[i + 2] = b * (1 - level); // Darken with inverse factor
+                    // Outside this band's range: keep original
+                    newData[i] = r; newData[i+1] = g; newData[i+2] = b; newData[i+3] = a;
                 }
-                
-                newData[i + 3] = data[i + 3]; // Preserve alpha channel
             }
 
-            return new ImageData(newData, canvas.width, canvas.height);
+            return new ImageData(newData, width, height);
         }
 
         function displayWashes(washes) {
@@ -136,13 +233,19 @@
 
             washes.forEach((washData, index) => {
                 const washCanvas = document.createElement('canvas');
-                washCanvas.width = 400;
-                washCanvas.height = 300;
+                washCanvas.width = washData.width;
+                washCanvas.height = washData.height;
                 const washCtx = washCanvas.getContext('2d');
 
                 // Draw each wash on its own canvas
                 washCtx.putImageData(washData, 0, 0);
                 washCanvas.className = 'wash';
+                if (grayscaleActive) washCanvas.classList.add('grayscale');
+
+                // Make sure it's visible fully and responsive
+                washCanvas.style.maxWidth = '300px';
+                washCanvas.style.height = 'auto';
+
                 previewContainer.appendChild(washCanvas);
             });
         }
