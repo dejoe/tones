@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Watercolor Washes Creator</title>
+    <script src="https://unpkg.com/@spreadtheweb/multi-range-slider@1.0.2/dist/range-slider.main.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -43,20 +44,7 @@
 
     <h2>Adjust Wash Levels</h2>
 
-    <label for="light-end">Light End: <span id="light-end-val">0.33</span></label>
-    <input type="range" id="light-end" min="0" max="1" step="0.01" value="0.33"><br>
-
-    <label for="medium-end">Medium End: <span id="medium-end-val">0.66</span></label>
-    <input type="range" id="medium-end" min="0" max="1" step="0.01" value="0.66"><br>
-
-    <label for="light-wash">Light Wash Strength:</label>
-    <input type="range" id="light-wash" min="0" max="1" step="0.01" value="0.2"><br>
-
-    <label for="medium-wash">Medium Wash Strength:</label>
-    <input type="range" id="medium-wash" min="0" max="1" step="0.01" value="0.5"><br>
-
-    <label for="dark-wash">Dark Wash Strength:</label>
-    <input type="range" id="dark-wash" min="0" max="1" step="0.01" value="0.75"><br>
+    <div class="range-slider" style="width: 300px; margin: 0 auto 20px;"></div>
 
     <button id="generate-washes">Generate Washes</button>
     <button id="toggle-grayscale">Toggle Grayscale</button> 
@@ -70,14 +58,8 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
-        const lightEnd = document.getElementById('light-end');
-        const mediumEnd = document.getElementById('medium-end');
-        const lightEndVal = document.getElementById('light-end-val');
-        const mediumEndVal = document.getElementById('medium-end-val');
-
-        const lightStrength = document.getElementById('light-wash');
-        const mediumStrength = document.getElementById('medium-wash');
-        const darkStrength = document.getElementById('dark-wash');
+        let lightEnd = 0.33;
+        let mediumEnd = 0.66;
 
         const generateBtn = document.getElementById('generate-washes');
         const toggleGrayBtn = document.getElementById('toggle-grayscale');
@@ -91,33 +73,16 @@
         // Wire up events
         uploadInput.addEventListener('change', handleFileUpload);
 
-        // Strength sliders
-        lightStrength.addEventListener('input', updateWashes);
-        mediumStrength.addEventListener('input', updateWashes);
-        darkStrength.addEventListener('input', updateWashes);
-
-        // Boundary sliders (enforce non-overlap)
-        lightEnd.addEventListener('input', () => {
-            let l = parseFloat(lightEnd.value);
-            let m = parseFloat(mediumEnd.value);
-            if (l > m) {
-                mediumEnd.value = l;
-                m = l;
-            }
-            lightEndVal.textContent = parseFloat(lightEnd.value).toFixed(2);
-            mediumEndVal.textContent = parseFloat(mediumEnd.value).toFixed(2);
-            updateWashes();
+        let rangeSlider = new RangeSlider('.range-slider', {
+            values: [0.33, 0.66],
+            min: 0,
+            max: 1,
+            step: 0.01,
         });
 
-        mediumEnd.addEventListener('input', () => {
-            let m = parseFloat(mediumEnd.value);
-            let l = parseFloat(lightEnd.value);
-            if (m < l) {
-                lightEnd.value = m;
-                l = m;
-            }
-            lightEndVal.textContent = parseFloat(lightEnd.value).toFixed(2);
-            mediumEndVal.textContent = parseFloat(mediumEnd.value).toFixed(2);
+        rangeSlider.onChange(values => {
+            lightEnd = values[0];
+            mediumEnd = values[1];
             updateWashes();
         });
 
@@ -173,32 +138,16 @@
             const imageData = sourceCtx.getImageData(0, 0, imgW, imgH);
             const data = imageData.data;
 
-            // Compute average brightness across the image
-            let brightnessSum = 0;
-            const pixelCount = data.length / 4;
-            for (let i = 0; i < data.length; i += 4) {
-                const r = data[i], g = data[i+1], b = data[i+2];
-                brightnessSum += (r + g + b) / 3;
-            }
-            const averageBrightness = brightnessSum / pixelCount;
-
-            const lightLevel = parseFloat(lightStrength.value);
-            const mediumLevel = parseFloat(mediumStrength.value);
-            const darkLevel = parseFloat(darkStrength.value);
-
-            const lEnd = parseFloat(lightEnd.value);
-            const mEnd = parseFloat(mediumEnd.value);
-
             const washes = [
-                createWash(data, lightLevel, 0, lEnd, averageBrightness, imgW, imgH),
-                createWash(data, mediumLevel, lEnd, mEnd, averageBrightness, imgW, imgH),
-                createWash(data, darkLevel, mEnd, 1, averageBrightness, imgW, imgH)
+                createWash(data, 0, lightEnd, imgW, imgH),
+                createWash(data, lightEnd, mediumEnd, imgW, imgH),
+                createWash(data, mediumEnd, 1, imgW, imgH)
             ];
 
             displayWashes(washes);
         }
 
-        function createWash(data, level, low, high, averageBrightness, width, height) {
+        function createWash(data, low, high, width, height) {
             const newData = new Uint8ClampedArray(data.length);
 
             for (let i = 0; i < data.length; i += 4) {
@@ -207,20 +156,15 @@
                 const norm = brightness / 255;
 
                 if (norm >= low && norm <= high) {
-                    // Apply contrast-like effect controlled by 'level'
-                    if (brightness < averageBrightness) {
-                        newData[i] = Math.max(0, Math.min(255, r * (1 - level)));
-                        newData[i+1] = Math.max(0, Math.min(255, g * (1 - level)));
-                        newData[i+2] = Math.max(0, Math.min(255, b * (1 - level)));
-                    } else {
-                        newData[i] = Math.max(0, Math.min(255, r * (1 + level)));
-                        newData[i+1] = Math.max(0, Math.min(255, g * (1 + level)));
-                        newData[i+2] = Math.max(0, Math.min(255, b * (1 + level)));
-                    }
+                    newData[i] = r;
+                    newData[i+1] = g;
+                    newData[i+2] = b;
                     newData[i+3] = a;
                 } else {
-                    // Outside this band's range: keep original
-                    newData[i] = r; newData[i+1] = g; newData[i+2] = b; newData[i+3] = a;
+                    newData[i] = 255;
+                    newData[i+1] = 255;
+                    newData[i+2] = 255;
+                    newData[i+3] = 255;
                 }
             }
 
