@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watercolor Washes Creator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        canvas {
+            border: 1px solid #ccc;
+        }
+
+        #wash-preview {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .wash {
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Watercolor Washes Creator</h1>
+    <input type="file" id="upload" accept="image/*">
+    <canvas id="canvas" width="800" height="600"></canvas>
+
+    <h2>Adjust Wash Levels</h2>
+    <label for="light-wash">Light Wash Level:</label>
+    <input type="range" id="light-wash" min="0" max="1" step="0.1" value="0.2"><br>
+
+    <label for="medium-wash">Medium Wash Level:</label>
+    <input type="range" id="medium-wash" min="0" max="1" step="0.1" value="0.5"><br>
+
+    <label for="dark-wash">Dark Wash Level:</label>
+    <input type="range" id="dark-wash" min="0" max="1" step="0.1" value="0.75"><br>
+
+    <button id="generate-washes">Generate Washes</button>
+
+    <h2>Wash Previews</h2>
+    <div id="wash-preview"></div>
+
+    <script>
+        document.getElementById('upload').addEventListener('change', handleFileUpload);
+        document.getElementById('light-wash').addEventListener('input', updateWashes);
+        document.getElementById('medium-wash').addEventListener('input', updateWashes);
+        document.getElementById('dark-wash').addEventListener('input', updateWashes);
+
+        let uploadedImage;
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                uploadedImage = new Image();
+                uploadedImage.src = e.target.result;
+                uploadedImage.onload = function() {
+                    const canvas = document.getElementById('canvas');
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(uploadedImage, 0, 0, canvas.width, canvas.height);
+                    updateWashes(); // Generate initial washes
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updateWashes() {
+            if (!uploadedImage) return;
+
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+
+            const lightLevel = parseFloat(document.getElementById('light-wash').value);
+            const mediumLevel = parseFloat(document.getElementById('medium-wash').value);
+            const darkLevel = parseFloat(document.getElementById('dark-wash').value);
+
+            const washes = [
+                createWash(data, lightLevel),
+                createWash(data, mediumLevel),
+                createWash(data, darkLevel)
+            ];
+
+            displayWashes(washes);
+        }
+
+        function createWash(data, level) {
+            const newData = new Uint8ClampedArray(data.length);
+            let brightnessSum = 0;
+            const pixelCount = data.length / 4;
+
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                const brightness = (r + g + b) / 3;
+
+                brightnessSum += brightness;
+            }
+
+            const averageBrightness = brightnessSum / pixelCount;
+
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+
+                const brightness = (r + g + b) / 3;
+
+                if (brightness < averageBrightness) {
+                    newData[i] = r * level;        // Apply lighter factor
+                    newData[i + 1] = g * level;    // Apply lighter factor
+                    newData[i + 2] = b * level;    // Apply lighter factor
+                } else {
+                    newData[i] = r * (1 - level); // Darken with inverse factor
+                    newData[i + 1] = g * (1 - level); // Darken with inverse factor
+                    newData[i + 2] = b * (1 - level); // Darken with inverse factor
+                }
+                
+                newData[i + 3] = data[i + 3]; // Preserve alpha channel
+            }
+
+            return new ImageData(newData, canvas.width, canvas.height);
+        }
+
+        function displayWashes(washes) {
+            const previewContainer = document.getElementById('wash-preview');
+            previewContainer.innerHTML = ''; // Clear previous previews
+
+            washes.forEach((washData, index) => {
+                const washCanvas = document.createElement('canvas');
+                washCanvas.width = 400;
+                washCanvas.height = 300;
+                const washCtx = washCanvas.getContext('2d');
+
+                // Draw each wash on its own canvas
+                washCtx.putImageData(washData, 0, 0);
+                washCanvas.className = 'wash';
+                previewContainer.appendChild(washCanvas);
+            });
+        }
+    </script>
+</body>
+</html>
