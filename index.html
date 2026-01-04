@@ -58,8 +58,8 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
-        let lightEnd = 0.33;
-        let mediumEnd = 0.66;
+        let lightEnd = 170;
+        let mediumEnd = 85;
 
         const generateBtn = document.getElementById('generate-washes');
         const toggleGrayBtn = document.getElementById('toggle-grayscale');
@@ -74,15 +74,16 @@
         uploadInput.addEventListener('change', handleFileUpload);
 
         let rangeSlider = new RangeSlider('.range-slider', {
-            values: [0.33, 0.66],
+            values: [85, 170],
             min: 0,
-            max: 1,
-            step: 0.01,
+            max: 255,
+            step: 1,
         });
 
         rangeSlider.onChange(values => {
-            lightEnd = values[0];
-            mediumEnd = values[1];
+            // Higher value is the light boundary, lower is the medium/dark boundary
+            lightEnd = Math.max(values[0], values[1]);
+            mediumEnd = Math.min(values[0], values[1]);
             updateWashes();
         });
 
@@ -139,9 +140,9 @@
             const data = imageData.data;
 
             const washes = [
-                createWash(data, 0, lightEnd, imgW, imgH),
-                createWash(data, lightEnd, mediumEnd, imgW, imgH),
-                createWash(data, mediumEnd, 1, imgW, imgH)
+                createWash(data, lightEnd, 255, imgW, imgH), // Light wash
+                createWash(data, mediumEnd, lightEnd, imgW, imgH), // Medium wash
+                createWash(data, 0, mediumEnd, imgW, imgH) // Dark wash
             ];
 
             displayWashes(washes);
@@ -152,10 +153,9 @@
 
             for (let i = 0; i < data.length; i += 4) {
                 const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
-                const brightness = (r + g + b) / 3;
-                const norm = brightness / 255;
+                const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
-                if (norm >= low && norm <= high) {
+                if (luminance >= low && luminance <= high) {
                     newData[i] = r;
                     newData[i+1] = g;
                     newData[i+2] = b;
@@ -164,7 +164,7 @@
                     newData[i] = 255;
                     newData[i+1] = 255;
                     newData[i+2] = 255;
-                    newData[i+3] = 255;
+                    newData[i+3] = 0; // Make transparent
                 }
             }
 
