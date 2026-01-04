@@ -1,6 +1,6 @@
 # Watercolor Washes Creator Web Application
 
-To build a web app that facilitates creating multiple washes from an input photo, several key components need to be considered, including the technology stack, user interface design, and functionality. Here's a detailed approach to get started.
+The Watercolor Washes Creator web application, allows users to upload a photo and generate multiple watercolor washes with customizable levels of intensity. This is an interactive web application that provides users with an easy-to-use interface to manipulate images and produce various watercolor washes (light, medium, and dark) using adjustable parameters.
 
 ### 1. Core Functionality
 
@@ -16,5 +16,5 @@ To build a web app that facilitates creating multiple washes from an input photo
 
 - **Frontend:**
   - **HTML/CSS/JavaScript:** Basic structure, styling, and interactivity.
-  - **Fabric.js or PixiJS:** For image manipulation and canvas interactions.
+  - **HTML5 Canas:** For image manipulation and display.
 
