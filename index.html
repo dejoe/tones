@@ -65,8 +65,6 @@
         const toggleGrayBtn = document.getElementById('toggle-grayscale');
 
         let uploadedImage = null;
-        let sourceCanvas = null;
-        let sourceCtx = null;
         let imgW = 0, imgH = 0; // scaled image size for processing
         let grayscaleActive = false;
 
@@ -120,13 +118,6 @@
                     const y = Math.round((canvas.height - imgH) / 2);
                     ctx.drawImage(uploadedImage, x, y, imgW, imgH);
 
-                    // Prepare an offscreen canvas sized to the scaled image for processing
-                    sourceCanvas = document.createElement('canvas');
-                    sourceCanvas.width = imgW;
-                    sourceCanvas.height = imgH;
-                    sourceCtx = sourceCanvas.getContext('2d');
-                    sourceCtx.drawImage(uploadedImage, 0, 0, imgW, imgH);
-
                     updateWashes(); // Generate initial washes
                 };
             };
@@ -134,9 +125,16 @@
         }
 
         function updateWashes() {
-            if (!uploadedImage || !sourceCtx) return;
+            if (!uploadedImage) return;
 
-            const imageData = sourceCtx.getImageData(0, 0, imgW, imgH);
+            // Create a fresh offscreen canvas for processing
+            const processCanvas = document.createElement('canvas');
+            processCanvas.width = imgW;
+            processCanvas.height = imgH;
+            const processCtx = processCanvas.getContext('2d');
+            processCtx.drawImage(uploadedImage, 0, 0, imgW, imgH);
+
+            const imageData = processCtx.getImageData(0, 0, imgW, imgH);
             const data = imageData.data;
 
             const washes = [
