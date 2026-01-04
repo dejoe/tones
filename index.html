@@ -78,7 +78,7 @@
             step: 1,
         });
 
-        rangeSlider.onChange(values => {
+        rangeSlider.onInput(values => {
             // Higher value is the light boundary, lower is the medium/dark boundary
             lightEnd = Math.max(values[0], values[1]);
             mediumEnd = Math.min(values[0], values[1]);
