@@ -28,6 +28,14 @@
         .wash {
             margin: 0 10px;
             max-width: 300px;
+        }
+
+        .wash-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
             height: auto;
             box-shadow: 0 2px 6px rgba(0,0,0,0.08);
         }
@@ -78,7 +86,7 @@
             step: 1,
         });
 
-        rangeSlider.onChange(values => {
+        rangeSlider.onInput(values => {
             // Higher value is the light boundary, lower is the medium/dark boundary
             lightEnd = Math.max(values[0], values[1]);
             mediumEnd = Math.min(values[0], values[1]);
@@ -188,7 +196,21 @@
                 washCanvas.style.maxWidth = '300px';
                 washCanvas.style.height = 'auto';
 
-                previewContainer.appendChild(washCanvas);
+                const downloadBtn = document.createElement('button');
+                downloadBtn.textContent = 'Download';
+                downloadBtn.addEventListener('click', () => {
+                    const link = document.createElement('a');
+                    link.download = `wash-${index}.png`;
+                    link.href = washCanvas.toDataURL();
+                    link.click();
+                });
+
+                const washContainer = document.createElement('div');
+                washContainer.className = 'wash-container';
+                washContainer.appendChild(washCanvas);
+                washContainer.appendChild(downloadBtn);
+
+                previewContainer.appendChild(washContainer);
             });
         }
     </script>
