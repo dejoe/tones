@@ -45,9 +45,11 @@
         }
 
         .upload-box {
-            border: 2px dashed var(--border-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
             padding: 2rem 4rem;
             text-align: center;
+            background-color: var(--sidebar-bg);
         }
 
         #main-content-view {
@@ -106,11 +108,20 @@
             border: none;
             padding: 0.75rem 1.5rem;
             cursor: pointer;
-            border-radius: 4px;
+            border-radius: 9999px;
         }
 
-        button:hover {
+        button:hover, .file-upload-label:hover {
             opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-icon {
+            width: 1.2em;
+            height: 1.2em;
+            margin-right: 0.5em;
+            vertical-align: middle;
         }
 
         .grayscale {
@@ -157,7 +168,7 @@
             color: white;
             padding: 0.75rem 1.5rem;
             cursor: pointer;
-            border-radius: 4px;
+            border-radius: 9999px;
             display: inline-block;
         }
 
@@ -178,7 +189,12 @@
         <div class="upload-box">
             <div class="file-upload-wrapper">
                 <input type="file" id="upload" accept="image/*" class="file-upload-input">
-                <label for="upload" class="file-upload-label">Choose a file</label>
+                <label for="upload" class="file-upload-label">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="btn-icon">
+                        <path fill-rule="evenodd" d="M11.47 2.47a.75.75 0 0 1 1.06 0l4.5 4.5a.75.75 0 0 1-1.06 1.06l-3.22-3.22V16.5a.75.75 0 0 1-1.5 0V4.81L8.03 8.03a.75.75 0 0 1-1.06-1.06l4.5-4.5ZM3 15.75a.75.75 0 0 1 .75.75v2.25a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5V16.5a.75.75 0 0 1 1.5 0v2.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V16.5a.75.75 0 0 1 .75-.75Z" clip-rule="evenodd"/>
+                    </svg>
+                    Choose a file
+                </label>
             </div>
             <p>Upload an image to get started.</p>
         </div>
@@ -191,12 +207,28 @@
             </div>
             <h2>Adjust Wash Levels</h2>
             <div class="range-slider" style="width: 200px; margin: 0 auto 20px;"></div>
-            <button id="generate-washes">Generate Washes</button>
-            <button id="toggle-grayscale">Toggle Grayscale</button>
+            <button id="generate-washes">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="btn-icon">
+                  <path fill-rule="evenodd" d="M9 4.5a.75.75 0 0 1 .721.544l.813 2.846a3.75 3.75 0 0 0 2.576 2.576l2.846.813a.75.75 0 0 1 0 1.442l-2.846.813a3.75 3.75 0 0 0-2.576 2.576l-.813 2.846a.75.75 0 0 1-1.442 0l-.813-2.846a3.75 3.75 0 0 0-2.576-2.576l-2.846-.813a.75.75 0 0 1 0-1.442l2.846-.813A3.75 3.75 0 0 0 7.466 7.89l.813-2.846A.75.75 0 0 1 9 4.5ZM18 1.5a.75.75 0 0 1 .728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 0 1 0 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 0 1-1.456 0l-.258-1.036a2.625 2.625 0 0 0-1.91-1.91l-1.036-.258a.75.75 0 0 1 0-1.456l1.036-.258a2.625 2.625 0 0 0 1.91-1.91l.258-1.036A.75.75 0 0 1 18 1.5ZM16.5 15a.75.75 0 0 1 .712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 0 1 0 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 0 1-1.422 0l-.395-1.183a1.5 1.5 0 0 0-.948-.948l-1.183-.395a.75.75 0 0 1 0-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0 1 16.5 15Z" clip-rule="evenodd"/>
+                </svg>
+                Generate Washes
+            </button>
+            <button id="toggle-grayscale">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="btn-icon">
+                    <path fill-rule="evenodd" d="M2.25 4.125c0-1.036.84-1.875 1.875-1.875h5.25c1.036 0 1.875.84 1.875 1.875V17.25a4.5 4.5 0 1 1-9 0V4.125Zm4.5 14.25a1.125 1.125 0 1 0 0-2.25 1.125 1.125 0 0 0 0 2.25Z" clip-rule="evenodd"/>
+                    <path d="M10.719 21.75h9.156c1.036 0 1.875-.84 1.875-1.875v-5.25c0-1.036-.84-1.875-1.875-1.875h-.14l-8.742 8.743c-.09.089-.18.175-.274.257ZM12.738 17.625l6.474-6.474a1.875 1.875 0 0 0 0-2.651L15.5 4.787a1.875 1.875 0 0 0-2.651 0l-.1.099V17.25c0 .126-.003.251-.01.375Z"/>
+                </svg>
+                Toggle Grayscale
+            </button>
             <div class="new-upload-form">
                 <div class="file-upload-wrapper">
                     <input type="file" id="new-upload" accept="image/*" class="file-upload-input">
-                    <label for="new-upload" class="file-upload-label">Upload new image</label>
+                    <label for="new-upload" class="file-upload-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="btn-icon">
+                           <path fill-rule="evenodd" d="M11.47 2.47a.75.75 0 0 1 1.06 0l4.5 4.5a.75.75 0 0 1-1.06 1.06l-3.22-3.22V16.5a.75.75 0 0 1-1.5 0V4.81L8.03 8.03a.75.75 0 0 1-1.06-1.06l4.5-4.5ZM3 15.75a.75.75 0 0 1 .75.75v2.25a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5V16.5a.75.75 0 0 1 1.5 0v2.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V16.5a.75.75 0 0 1 .75-.75Z" clip-rule="evenodd"/>
+                        </svg>
+                        Upload new image
+                    </label>
                 </div>
             </div>
         </aside>
@@ -360,7 +392,12 @@
                 if (grayscaleActive) washCanvas.classList.add('grayscale');
 
                 const downloadBtn = document.createElement('button');
-                downloadBtn.textContent = 'Download';
+                downloadBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="btn-icon">
+                        <path fill-rule="evenodd" d="M12 2.25a.75.75 0 0 1 .75.75v11.69l3.22-3.22a.75.75 0 1 1 1.06 1.06l-4.5 4.5a.75.75 0 0 1-1.06 0l-4.5-4.5a.75.75 0 1 1 1.06-1.06l3.22 3.22V3a.75.75 0 0 1 .75-.75Zm-9 13.5a.75.75 0 0 1 .75.75v2.25a1.5 1.5 0 0 0 1.5 1.5h13.5a1.5 1.5 0 0 0 1.5-1.5V16.5a.75.75 0 0 1 1.5 0v2.25a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3V16.5a.75.75 0 0 1 .75-.75Z" clip-rule="evenodd"/>
+                    </svg>
+                    Download
+                `;
                 downloadBtn.addEventListener('click', () => {
                     const link = document.createElement('a');
                     link.download = `wash-${index}.png`;
