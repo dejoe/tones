@@ -187,18 +187,11 @@
 
         let uploadedImage = null;
         let grayscaleActive = false;
+        let rangeSlider = null;
 
         // Wire up events
         uploadInput.addEventListener('change', handleFileUpload);
         newUploadInput.addEventListener('change', handleFileUpload);
-
-
-        let rangeSlider = new RangeSlider('.range-slider', {
-            values: [85, 170],
-            min: 0,
-            max: 255,
-            step: 1,
-        });
 
         // Debounce function to limit how often a function can run
         function debounce(func, delay) {
@@ -211,13 +204,6 @@
         }
 
         const debouncedUpdateWashes = debounce(updateWashes, 250);
-
-        rangeSlider.onChange(values => {
-            // Higher value is the light boundary, lower is the medium/dark boundary
-            lightEnd = Math.max(values[0], values[1]);
-            mediumEnd = Math.min(values[0], values[1]);
-            debouncedUpdateWashes();
-        });
 
         generateBtn.addEventListener('click', updateWashes);
 
@@ -257,6 +243,23 @@
                     // Switch views
                     document.getElementById('initial-upload-view').style.display = 'none';
                     document.getElementById('main-content-view').style.display = 'flex';
+
+                    // Initialize the slider now that it's visible
+                    if (!rangeSlider) {
+                        rangeSlider = new RangeSlider('.range-slider', {
+                            values: [85, 170],
+                            min: 0,
+                            max: 255,
+                            step: 1,
+                        });
+
+                        rangeSlider.onChange(values => {
+                            // Higher value is the light boundary, lower is the medium/dark boundary
+                            lightEnd = Math.max(values[0], values[1]);
+                            mediumEnd = Math.min(values[0], values[1]);
+                            debouncedUpdateWashes();
+                        });
+                    }
                 };
                 uploadedImage.src = e.target.result; // Set src to trigger loading
             };
