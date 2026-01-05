@@ -126,6 +126,9 @@
 
         .range-slider__rail {
             background-color: var(--track-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            height: 8px;
         }
 
         .range-slider__track {
@@ -136,6 +139,30 @@
             background-color: var(--primary-color);
             position: relative;
             z-index: 1;
+        }
+
+        /* Add padding to the slider container to prevent thumbs from overflowing */
+        .sidebar .range-slider {
+            box-sizing: border-box;
+            padding: 0 15px;
+        }
+
+        /* Modern File Upload Button */
+        .file-upload-input {
+            display: none;
+        }
+
+        .file-upload-label {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .file-upload-label:hover {
+            opacity: 0.9;
         }
     </style>
 </head>
@@ -149,7 +176,10 @@
 
     <div id="initial-upload-view">
         <div class="upload-box">
-            <input type="file" id="upload" accept="image/*">
+            <div class="file-upload-wrapper">
+                <input type="file" id="upload" accept="image/*" class="file-upload-input">
+                <label for="upload" class="file-upload-label">Choose a file</label>
+            </div>
             <p>Upload an image to get started.</p>
         </div>
     </div>
@@ -164,7 +194,10 @@
             <button id="generate-washes">Generate Washes</button>
             <button id="toggle-grayscale">Toggle Grayscale</button>
             <div class="new-upload-form">
-                <input type="file" id="new-upload" accept="image/*">
+                <div class="file-upload-wrapper">
+                    <input type="file" id="new-upload" accept="image/*" class="file-upload-input">
+                    <label for="new-upload" class="file-upload-label">Upload new image</label>
+                </div>
             </div>
         </aside>
         <section class="content">
