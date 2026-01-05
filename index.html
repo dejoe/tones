@@ -200,11 +200,23 @@
             step: 1,
         });
 
+        // Debounce function to limit how often a function can run
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+
+        const debouncedUpdateWashes = debounce(updateWashes, 250);
+
         rangeSlider.onChange(values => {
             // Higher value is the light boundary, lower is the medium/dark boundary
             lightEnd = Math.max(values[0], values[1]);
             mediumEnd = Math.min(values[0], values[1]);
-            updateWashes();
+            debouncedUpdateWashes();
         });
 
         generateBtn.addEventListener('click', updateWashes);
