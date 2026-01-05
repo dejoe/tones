@@ -116,6 +116,27 @@
         .grayscale {
             filter: grayscale(100%);
         }
+
+        /* Slider Styles */
+        .range-slider {
+            --primary-color: #4a90e2; /* Re-using the primary color for the slider */
+            --thumb-color: #f0f0f0;
+            --track-color: #444;
+        }
+
+        .range-slider__rail {
+            background-color: var(--track-color);
+        }
+
+        .range-slider__track {
+            background-color: var(--primary-color);
+        }
+
+        .range-slider__point {
+            background-color: var(--primary-color);
+            position: relative;
+            z-index: 1;
+        }
     </style>
 </head>
 <body>
